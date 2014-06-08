@@ -29,9 +29,12 @@ public class MainActivity extends Activity implements OnClickListener {
 	private TextView longitude;
 	private TextView counter;
 	private Button map;
+	private Button run;
 	private LocationListener myLocationListener;
 	private String provider = LocationManager.GPS_PROVIDER;
 	public ArrayList<Location> places = new ArrayList<Location>();
+	private int RUN_CODE = 1;
+	private TextView conta;
 
 
 
@@ -42,10 +45,13 @@ public class MainActivity extends Activity implements OnClickListener {
 
 		latitude = (TextView) findViewById(R.id.textView2);
 		longitude = (TextView) findViewById(R.id.textView4);
+		conta = (TextView) findViewById(R.id.textView5);
 		counter = (TextView) findViewById(R.id.placesCounter);
 		map = (Button) findViewById(R.id.button1);
+		run = (Button) findViewById(R.id.button2);
 
 		map.setOnClickListener(this);
+		run.setOnClickListener(this);
 
 
 		myLocationListener = new LocationListener()	{		//crea un listener
@@ -98,24 +104,44 @@ public class MainActivity extends Activity implements OnClickListener {
 
 	protected void onResume() {			//è chiamato dopo una sospensione della app, o anche dopo il primo OnCreate
 		super.onResume();
-		LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-		updateLocation(locationManager.getLastKnownLocation(provider));		//prende una prima location
-		locationManager.requestLocationUpdates(provider, 5000, 3, myLocationListener);
+//		LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+//		updateLocation(locationManager.getLastKnownLocation(provider));		//prende una prima location
+//		locationManager.requestLocationUpdates(provider, 5000, 3, myLocationListener);
 
 	}
 
 	protected void onPause() {
-		LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-		locationManager.removeUpdates(myLocationListener);
-		super.onPause();
+//		LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+//		locationManager.removeUpdates(myLocationListener);
+	super.onPause();
 	}
 	@Override
 	public void onClick(View v) {
-		Intent intent = new Intent(this, MapActivity.class); // Explicit intent creation
-		intent.putParcelableArrayListExtra("array", places);
-		startActivityForResult(intent, 1); // Start as sub-activity for result
-
+		switch (v.getId()){
+		case R.id.button1:
+		Intent intentMap = new Intent(this, MapActivity.class); // Explicit intent creation
+		intentMap.putParcelableArrayListExtra("array", places);
+		startActivityForResult(intentMap, 1); // Start as sub-activity for result
+		break;
+		case R.id.button2:
+			Intent intentRun = new Intent(this, RunActivity.class); // Explicit intent creation
+			startActivityForResult(intentRun, RUN_CODE); // Start as sub-activity for result	
+		}
 	}
 	
-	
+	 protected void onActivityResult(
+	            int requestCode, 
+	            int resultCode,
+	            Intent pData) {
+		 if ( requestCode == RUN_CODE ) 
+         {
+             if (resultCode == Activity.RESULT_OK ) 
+             {
+            	 places = pData.getParcelableArrayListExtra("locations");
+            	 conta.setText(places.size() + "");
+                 
+             }
+         }
+	 }
+
 }

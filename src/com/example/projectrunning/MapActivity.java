@@ -10,8 +10,10 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 import android.app.Activity;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -33,6 +35,10 @@ public class MapActivity extends Activity {
 	private double lat;
 	public double lon;
 	public ArrayList<Location> placesMap = new ArrayList<Location>();
+	private double prelat;
+	private double prelon;
+	private LatLng mntgnrpre;
+	
 
 
 	@Override
@@ -45,19 +51,27 @@ public class MapActivity extends Activity {
 		
 		placesMap = getIntent().getParcelableArrayListExtra("array");
 		int counter = placesMap.size();
+		Location prevLoc;
 		Location lastLoc = placesMap.get(0);
 		lat = lastLoc.getLatitude();
 		lon = lastLoc.getLongitude();
 		LatLng mntgnr = new LatLng(lat, lon);
 		map.moveCamera(CameraUpdateFactory.newLatLngZoom(mntgnr, 20));		//posizione la camera
 
-		for(int i=0; i<counter; i++ ){
+		for(int i=1; i<counter; i++ ){
 		lastLoc = placesMap.get(i);
+		prevLoc = placesMap.get(i-1);
 		lat = lastLoc.getLatitude();
 		lon = lastLoc.getLongitude();
 		mntgnr = new LatLng(lat, lon);								//setta una coppia LAT-LONG
-		map.addMarker(new MarkerOptions().title("Sei qui").position(mntgnr));	//aggiunge un marker
+		prelat = prevLoc.getLatitude();
+		prelon = prevLoc.getLongitude();
+		mntgnrpre = new LatLng(prelat, prelon);
+		map.addMarker(new MarkerOptions().title("Sei qui").position(mntgnr));	//aggiunge un marker.
+		map.addPolyline(new PolylineOptions().add(mntgnr, mntgnrpre).color(Color.RED).width(5));
 		}
+		
+		
 		
 
 		

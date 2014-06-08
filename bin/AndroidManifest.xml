@@ -47,6 +47,10 @@
             android:label="@string/title_activity_map" >
             <action android:name="android.intent.action.MAIN" />
         </activity>
+        <activity
+            android:name="com.example.projectrunning.RunActivity"
+            android:label="@string/title_activity_run" >
+        </activity>
     </application>
 
 </manifest>
