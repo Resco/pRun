@@ -1,0 +1,14 @@
+creare database
+pagina principale permette:
+-nuova corsa
+-ripercorri corsa
+-visualizza corse
+
+unire i punti della corsa
+
+la nuova corsa ha 2 bottoni, VIA e STOP. quando premo STOP posso: salvare, dando un nome un commento e una data
+																  scartare
+In entrambi i casi si torna alla MAIN
+
+Visualizza corse apre una lista di corse, con tempo e km. Per ogni corsa posso aprire una mappa.
+
