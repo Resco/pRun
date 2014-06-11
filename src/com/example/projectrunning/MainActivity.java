@@ -7,6 +7,7 @@ import java.util.Locale;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.database.Cursor;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -32,9 +33,13 @@ public class MainActivity extends Activity implements OnClickListener {
 	private Button run;
 	private LocationListener myLocationListener;
 	private String provider = LocationManager.GPS_PROVIDER;
-	public ArrayList<Location> places = new ArrayList<Location>();
+	public ArrayList<String> places = new ArrayList<String>();
 	private int RUN_CODE = 1;
 	private TextView conta;
+	private DBAdapter dbAdapter;
+	private DBAdapter adapter;
+	private String comando;
+	private Cursor cursor;
 
 
 
@@ -53,54 +58,43 @@ public class MainActivity extends Activity implements OnClickListener {
 		map.setOnClickListener(this);
 		run.setOnClickListener(this);
 
+		adapter = new DBAdapter(this);
+		adapter.open();
+		
+//		float number = 0;
+//		float distance = 0;
+//		float time = 0;
+//		float speed = 0;
+//		float lat = (float) 45.6532;
+//		float lon = (float) 45.6532;
+//		String runName = "'minchiaz'";
+//		String sql = String.format
+//				("insert into Punti (npunto,distance,time,speed,lat,lon,names) VALUES (%s , %s , %s , %s , %s , %s , %s );",
+//				 number, distance, time, speed, lat, lon, runName);
+//		adapter.execute(sql);
+//		
+//		String sql = "INSERT INTO Punti (npunto,distance,time,speed,lat,lon,name) VALUES (" +
+//				number + ", " +
+//				distance + ", " +
+//				time + ", " +
+//				speed + ", " +
+//				lat + ", " +
+//				lon + ", " +
+//				runName +");";
+		
+		
+//		adapter.deleteAllRows();
+		
 
-		myLocationListener = new LocationListener()	{		//crea un listener
-
-			@Override
-			public void onStatusChanged(String provider, int status, Bundle extras) {
-				switch (status) {
-				case LocationProvider.OUT_OF_SERVICE:
-				case LocationProvider.TEMPORARILY_UNAVAILABLE:
-					Toast.makeText(getApplicationContext(), "Location provider is not available.",
-							Toast.LENGTH_SHORT).show();
-					break;
-				default:
-					break;
-				}
-			}
-
-			@Override
-			public void onProviderEnabled(String provider) {
-				Toast.makeText(getApplicationContext(), "Location service <" + provider + "> enabled.",
-						Toast.LENGTH_SHORT).show();
-			}
-
-			@Override
-			public void onProviderDisabled(String provider) {
-				Toast.makeText(getApplicationContext(), "Location service <" + provider + "> disabled.",
-						Toast.LENGTH_SHORT).show();
-			}
-
-			@Override
-			public void onLocationChanged(Location location) {
-				updateLocation(location);
-			}
-		};
-
-
+		
+		cursor = adapter.getAllEntries();
+		
+		conta.setText(cursor.getCount() + "");
+//		adapter.deleteAllRows();
 
 
 	}
-	private void updateLocation(Location location){
-		if (location == null)
-			return;
-		double lat= location.getLatitude();
-		double lon = location.getLongitude();
-		latitude.setText("" + lat);
-		longitude.setText("" + lon);
-		places.add(location);
-		counter.setText("" + places.size());
-	}
+	
 
 	protected void onResume() {			//è chiamato dopo una sospensione della app, o anche dopo il primo OnCreate
 		super.onResume();
@@ -120,7 +114,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		switch (v.getId()){
 		case R.id.button1:
 		Intent intentMap = new Intent(this, MapActivity.class); // Explicit intent creation
-		intentMap.putParcelableArrayListExtra("array", places);
+		//intentMap.putParcelableArrayListExtra("array", places);
 		startActivityForResult(intentMap, 1); // Start as sub-activity for result
 		break;
 		case R.id.button2:
@@ -137,9 +131,13 @@ public class MainActivity extends Activity implements OnClickListener {
          {
              if (resultCode == Activity.RESULT_OK ) 
              {
-            	 places = pData.getParcelableArrayListExtra("locations");
+            	 places = pData.getStringArrayListExtra("locations");
             	 conta.setText(places.size() + "");
-                 
+            	 for (int i=0; i<places.size(); i++){
+            		 comando = places.get(i);
+            		 adapter.execute(comando);
+            	 }
+            	
              }
          }
 	 }

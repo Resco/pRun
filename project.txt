@@ -12,3 +12,36 @@ In entrambi i casi si torna alla MAIN
 
 Visualizza corse apre una lista di corse, con tempo e km. Per ogni corsa posso aprire una mappa.
 
+
+
+Per ogni percorso devo tenere:
+-nome percorso
+-commento percorso
+-data percorso
+-lista di tratti percorso con:
+_dsitanza tratto
+_tempo impiegato per quel tratto
+_velocità su quel tratto
+
+Per calcolare la differenza di tempi devo:
+
+X è la DISTANZA a cui mi trovo ORA
+
+Per ottenere il TEMPO PER FARE X PRIMA devo:
+-trovare la somma dei tratti consecutivi che SUPERA X
+-calcolare tempo e distanza sommando tutti i TRATTI CONSECUTIVI CHE SOMMATI DANNO APPENA MENO DI X
+-calcolare la differenza tra APPENA PRIMA DI X e X
+-moltiplicare la differenza trovata con la VELOCITA' SUL TRATTO (quello appena dopo l'ultimo usato per calcolare)
+
+Ora faccio il TEMPO PER FARE X ORA meno IL TEMPO PER FARE X PRIMA (calcolato appena) e capisco se sono avanti o indietro
+
+
+create table punti (
+npunto varchar(50),
+distance float,
+times float,
+speed float,
+lat float,
+lon float,
+idcorsa varchar(50)
+)
