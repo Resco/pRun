@@ -51,6 +51,12 @@
             android:name="com.example.projectrunning.RunActivity"
             android:label="@string/title_activity_run" >
         </activity>
+        
+        <activity
+            android:name="com.example.projectrunning.RunInfoActivity"
+            android:label="@string/title_activity_run_info" >
+        </activity>
+        
     </application>
 
 </manifest>

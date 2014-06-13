@@ -30,4 +30,17 @@ public class DBContract {
 		
 
 	}
+	
+	static abstract class Corse implements BaseColumns {
+
+		static final String TABLE_NAME = "Corse";
+		static final String COLUMN_NAME_IDCORSA = "names";
+		static final String COLUMN_NAME_COMMENT = "comment";
+		static final String COLUMN_NAME_DISTANCE = "distance";
+		static final String COLUMN_NAME_TIME = "time";
+		static final String COLUMN_NAME_DATA = "calendar";
+
+		
+
+	}
 }

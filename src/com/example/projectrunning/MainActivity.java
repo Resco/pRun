@@ -5,7 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.location.Address;
@@ -15,6 +19,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -35,11 +40,12 @@ public class MainActivity extends Activity implements OnClickListener {
 	private String provider = LocationManager.GPS_PROVIDER;
 	public ArrayList<String> places = new ArrayList<String>();
 	private int RUN_CODE = 1;
-	private TextView conta;
+	private TextView conta, conta2;
 	private DBAdapter dbAdapter;
 	private DBAdapter adapter;
 	private String comando;
 	private Cursor cursor;
+	private Context contesto;
 
 
 
@@ -51,6 +57,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		latitude = (TextView) findViewById(R.id.textView2);
 		longitude = (TextView) findViewById(R.id.textView4);
 		conta = (TextView) findViewById(R.id.textView5);
+		conta2 = (TextView) findViewById(R.id.textView6);
 		counter = (TextView) findViewById(R.id.placesCounter);
 		map = (Button) findViewById(R.id.button1);
 		run = (Button) findViewById(R.id.button2);
@@ -60,37 +67,14 @@ public class MainActivity extends Activity implements OnClickListener {
 
 		adapter = new DBAdapter(this);
 		adapter.open();
-		
-//		float number = 0;
-//		float distance = 0;
-//		float time = 0;
-//		float speed = 0;
-//		float lat = (float) 45.6532;
-//		float lon = (float) 45.6532;
-//		String runName = "'minchiaz'";
-//		String sql = String.format
-//				("insert into Punti (npunto,distance,time,speed,lat,lon,names) VALUES (%s , %s , %s , %s , %s , %s , %s );",
-//				 number, distance, time, speed, lat, lon, runName);
-//		adapter.execute(sql);
-//		
-//		String sql = "INSERT INTO Punti (npunto,distance,time,speed,lat,lon,name) VALUES (" +
-//				number + ", " +
-//				distance + ", " +
-//				time + ", " +
-//				speed + ", " +
-//				lat + ", " +
-//				lon + ", " +
-//				runName +");";
-		
-		
-//		adapter.deleteAllRows();
-		
+
+		contesto = this;
 
 		
-		cursor = adapter.getAllEntries();
-		
+		cursor = adapter.getAllEntriesPunti();
 		conta.setText(cursor.getCount() + "");
-//		adapter.deleteAllRows();
+		cursor = adapter.getAllEntriesCorse();
+		conta2.setText(cursor.getCount() + "");
 
 
 	}
@@ -113,9 +97,20 @@ public class MainActivity extends Activity implements OnClickListener {
 	public void onClick(View v) {
 		switch (v.getId()){
 		case R.id.button1:
-		Intent intentMap = new Intent(this, MapActivity.class); // Explicit intent creation
-		//intentMap.putParcelableArrayListExtra("array", places);
-		startActivityForResult(intentMap, 1); // Start as sub-activity for result
+			
+			Cursor cursor = adapter.getAllRunsName();
+			String[] nameRun = new String [cursor.getCount()];
+			int i=0;
+			if (cursor.moveToFirst()){
+				do{
+					nameRun [i] = cursor.getString(0);
+					i++;
+				}while(cursor.moveToNext());
+			}
+			cursor.close();
+			createListDialog(nameRun, "BelTitolo");
+			
+
 		break;
 		case R.id.button2:
 			Intent intentRun = new Intent(this, RunActivity.class); // Explicit intent creation
@@ -141,5 +136,47 @@ public class MainActivity extends Activity implements OnClickListener {
              }
          }
 	 }
+	 
+		private void createListDialog(String [] items, String title ) {
+			final String[] MenuItems = items;
+			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+			// set title
+			alertDialogBuilder.setTitle(title);
+			// set dialog message
+			alertDialogBuilder
+			    .setCancelable(true)
+			    .setSingleChoiceItems(MenuItems, 0, new DialogInterface.OnClickListener() {
+
+			        @Override
+			        public void onClick(DialogInterface dialog1, int pos) {
+			            // TODO Auto-generated method stub
+			        	
+			        	for (int i = 0; i<MenuItems.length; i++){
+			        		if (i==pos){
+			        			//ciò che voglio fare quando clicco un elemento
+			        			Toast toast = Toast.makeText(getApplicationContext(), MenuItems[i] + pos, Toast.LENGTH_SHORT);
+			        			toast.show();
+			        			Intent intent = new Intent(contesto, RunInfoActivity.class);
+			        			intent.putExtra("id", MenuItems[i]);
+								startActivity(intent);
+			        		}
+			        	}
+			        	
+//			        	
+			            dialog1.cancel();
+			        }
+			    })
+			    .setPositiveButton("Cancel",new DialogInterface.OnClickListener() {
+			        @SuppressLint("NewApi")
+			        public void onClick(DialogInterface dialog1,int id) {
+			            dialog1.cancel();
+			        }
+			      });
+			
+	       // create alert dialog
+			AlertDialog alertDialog = alertDialogBuilder.create();
+			// show it
+			alertDialog.show();
+		}
 
 }

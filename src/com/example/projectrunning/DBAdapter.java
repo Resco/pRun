@@ -3,6 +3,7 @@ package com.example.projectrunning;
 import java.io.ByteArrayOutputStream;
 
 
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -66,7 +67,7 @@ class DBAdapter {
 	}
 	
 	public int numberOfRows(){
-		Cursor cursore = this.getAllEntries();
+		Cursor cursore = this.getAllEntriesPunti();
 		int contatore = cursore.getCount();
 		return contatore;
 	}
@@ -100,10 +101,27 @@ class DBAdapter {
 //   * 
 //   * @return Cursor over all todoItems 
 //   */
-	public Cursor getAllEntries() {
+	public Cursor getAllEntriesPunti() {
 		return db.query(DBContract.Punti.TABLE_NAME, null, null, null, null, null, null);
 	}
 	
+	public Cursor getAllEntriesCorse() {
+		return db.query(DBContract.Corse.TABLE_NAME, null, null, null, null, null, null);
+	}
 	
+	public Cursor getAllRunsName(){
+		String [] colonne = {DBContract.Corse.COLUMN_NAME_IDCORSA};
+		return db.query(DBContract.Corse.TABLE_NAME, colonne, null, null, null, null, null);
+	}
+	
+	public Cursor getIdRowFromCorse (String id){
+		Cursor cursor = db.query(true, "corse", null, "names = " + id , null, null, null, null, null);
+		return cursor;
+	}
+
+	public Cursor getIdRowFromPunti(String id) {
+		Cursor cursor = db.query(true, "punti", null, "names = " + id , null, null, null, null, null);
+		return cursor;
+	}
 
 }

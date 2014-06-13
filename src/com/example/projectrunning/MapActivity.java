@@ -22,6 +22,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -40,6 +41,7 @@ public class MapActivity extends Activity {
 	private double prelon;
 	private LatLng mntgnrpre;
 	private DBAdapter adapter;
+	private ArrayList<Parcelable> coords;
 
 
 
@@ -76,21 +78,28 @@ public class MapActivity extends Activity {
 		
 		//GIUSTO
 		
-		adapter = new DBAdapter(this);
-		adapter.open();
+//		adapter = new DBAdapter(this);
+//		adapter.open();
+//
+//		Cursor cursor = adapter.getAllEntriesPunti();
+//		if (cursor.moveToFirst()){
+//			do{
+//				float lat = cursor.getFloat(cursor.getColumnIndex("lat"));
+//				float lon = cursor.getFloat(cursor.getColumnIndex("lon"));
+//				LatLng markCo = new LatLng(lat, lon);
+//				map.addMarker(new MarkerOptions().title("Sei qui").position(markCo));	//aggiunge un marker.
+//			}while(cursor.moveToNext());
+//		}
+//		cursor.close();
 
-		Cursor cursor = adapter.getAllEntries();
-		if (cursor.moveToFirst()){
-			do{
-				float lat = cursor.getFloat(cursor.getColumnIndex("lat"));
-				float lon = cursor.getFloat(cursor.getColumnIndex("lon"));
-				LatLng markCo = new LatLng(lat, lon);
-				map.addMarker(new MarkerOptions().title("Sei qui").position(markCo));	//aggiunge un marker.
-			}while(cursor.moveToNext());
-		}
-		cursor.close();
+		coords = getIntent().getParcelableArrayListExtra("latlngs");
+		
+		for(int i =0;i<coords.size();i++){
+			LatLng temp = (LatLng) coords.get(i);
+			map.addMarker(new MarkerOptions().title("Sei qui").position(temp));	//aggiunge un marker.
+		     
 
-
+		    }
 
 
 	}

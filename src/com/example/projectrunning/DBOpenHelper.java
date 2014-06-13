@@ -24,8 +24,24 @@ class DBOpenHelper extends SQLiteOpenHelper {
    	    + DBContract.Punti.COLUMN_NAME_SPEED + " float," 
    	    + DBContract.Punti.COLUMN_NAME_LAT + " float," 
    	    + DBContract.Punti.COLUMN_NAME_LON + " float," 
-   	    + DBContract.Punti.COLUMN_NAME_IDCORSA + " varchar(50)" 
+   	    + DBContract.Punti.COLUMN_NAME_IDCORSA + " varchar(100), PRIMARY KEY (" 
+   	    + DBContract.Punti.COLUMN_NAME_NUMPUNTO + "," 
+   	    + DBContract.Punti.COLUMN_NAME_IDCORSA + "), FOREIGN KEY ("
+   	    + DBContract.Punti.COLUMN_NAME_IDCORSA + ") references " 
+   	    + DBContract.Corse.TABLE_NAME + " (" 
+   	    + DBContract.Corse.COLUMN_NAME_IDCORSA + ") on delete cascade"   	    
 	    + ");";
+	
+	private static final String SQL_CREATE_TABLE_RUNS = "create table "
+			+ DBContract.Corse.TABLE_NAME + " (" 
+			+ DBContract.Corse.COLUMN_NAME_IDCORSA + " varchar(100)," 
+		    + DBContract.Corse.COLUMN_NAME_COMMENT + " varchar(100)," 
+		    + DBContract.Corse.COLUMN_NAME_DISTANCE + " float," 
+	   	    + DBContract.Corse.COLUMN_NAME_TIME + " float," 
+	   	    + DBContract.Corse.COLUMN_NAME_DATA + " varchar(100), PRIMARY KEY (" 
+	   	    + DBContract.Corse.COLUMN_NAME_IDCORSA + ")" 
+		    + ");";
+			
 
 	
 	//   2 METODI
@@ -36,6 +52,7 @@ class DBOpenHelper extends SQLiteOpenHelper {
 		Log.w(LOG_TAG, "Creating databse.");
 		try {
 			db.execSQL(SQL_CREATE_TABLE_FRASI);
+			db.execSQL(SQL_CREATE_TABLE_RUNS);
 		} catch (SQLException e) {
 			Log.e(LOG_TAG, e.getMessage());
 			throw e;

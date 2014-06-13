@@ -40,6 +40,10 @@ public class RunActivity extends Activity implements OnClickListener {
 	private String sql;
 	private String runName;
 	private EditText nameField;
+	private Float totDistance;
+	private Float totalTime;
+	private String comment = "'commento standard'";
+	private String calendar;
 
 
 	@Override
@@ -52,6 +56,9 @@ public class RunActivity extends Activity implements OnClickListener {
 		time = (TextView) findViewById(R.id.textView1);
 		dist = (TextView) findViewById(R.id.textView2);
 		nameField = (EditText) findViewById(R.id.editText1);
+		
+		totDistance = (float) 0;
+		totalTime = (float) 0;
 
 		start.setOnClickListener(this);
 		stop.setOnClickListener(this);
@@ -102,7 +109,6 @@ public class RunActivity extends Activity implements OnClickListener {
 		createName();
 		Toast toast1 = Toast.makeText(getApplicationContext(), "Start pushing " + runName, Toast.LENGTH_SHORT);
 		toast1.show();
-	//	updateLocation(locationManager.getLastKnownLocation(provider));		//prende una prima location
 		locationManager.requestLocationUpdates(provider, 3000, 3, myLocationListener);
 		break;
 		case R.id.button2:	//STOP
@@ -114,12 +120,14 @@ public class RunActivity extends Activity implements OnClickListener {
 		runName = nameField.getText().toString() ;
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 		Date date = new Date();
-		runName = "'" + runName + "_" + dateFormat.format(date) + "'";
+		calendar = dateFormat.format(date);
+		runName = "'" + runName + "_" + calendar + "'";
 	}
 
 	private void onFinishedRun() {
 		locationManager.removeUpdates(myLocationListener);
-		//stopTimer();
+		String sql = createLastSql();
+		places.add(sql);
 		Toast toast2 = Toast.makeText(getApplicationContext(), "Well done", Toast.LENGTH_SHORT);
 		toast2.show();
 		Intent iData = new Intent();
@@ -144,11 +152,19 @@ public class RunActivity extends Activity implements OnClickListener {
 			//salva le due posizioni, quella di adesso e quella di prima
 		locPre = locNow;
 		locNow = location;
+		float distance = locNow.distanceTo(locPre);
+		totDistance  = totDistance + distance;
+		float time = locNow.getTime() - locPre.getTime();
+		time = time/1000;
+		totalTime  = totalTime + time;
 		sql = createSql(locNow, locPre, counter);
 		places.add(sql);
 		}
+		
 		Toast toast = Toast.makeText(getApplicationContext(), "" + places.size() + "", Toast.LENGTH_SHORT);
 		toast.show();
+		dist.setText("Distance m : " + totDistance);
+		time.setText("Time s : " + totalTime);
 	}
 
 	@Override
@@ -168,17 +184,8 @@ public class RunActivity extends Activity implements OnClickListener {
 		("insert into punti (npunto,distance,time,speed,lat,lon,names) VALUES (%s , %s , %s , %s , %s , %s , %s );",
 		 number, distance, time,speed, lat, lon, runName);
 		
-//		String sql = "INSERT INTO Punti (npunto,distance,time,speed,lat,lon,name) VALUES (" +
-//				number + ", " +
-//				distance + ", " +
-//				time + ", " +
-//				speed + ", " +
-//				lat + ", " +
-//				lon + ", " +
-//				runName +");";
 		Toast toast = Toast.makeText(getApplicationContext(), sql, Toast.LENGTH_SHORT);
 		toast.show();
-		dist.setText(sql);
 
 		return sql;
 		
@@ -200,7 +207,17 @@ public class RunActivity extends Activity implements OnClickListener {
 		
 		Toast toast = Toast.makeText(getApplicationContext(), sql, Toast.LENGTH_SHORT);
 		toast.show();
-		dist.setText(sql);
+		return sql;
+		
+	}
+	
+	private String createLastSql (){
+		String com = "'dioooo'";
+		String calApici = "'" + calendar + "'";
+		String sql = String.format(
+				"insert into corse (names,comment,distance,time,calendar) VALUES (%s , %s , %s , %s , %s);",
+				runName, com, totDistance, totalTime, calApici
+				);
 		return sql;
 		
 	}
