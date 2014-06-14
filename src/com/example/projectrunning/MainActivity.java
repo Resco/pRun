@@ -82,7 +82,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		//bottone RUN
 		case R.id.button2:
 			Intent intentRun = new Intent(this, RunActivity.class); // Explicit intent creation
-			startActivityForResult(intentRun, RUN_CODE); // Start as sub-activity for result
+			startActivity(intentRun); // Start as sub-activity for result
 			break;
 			
 		//bottone RERUN
@@ -108,26 +108,20 @@ public class MainActivity extends Activity implements OnClickListener {
 		}
 	}
 
-	protected void onActivityResult(
-			int requestCode, 
-			int resultCode,
-			Intent pData) {
-		if ( requestCode == RUN_CODE ) //se rientriamo dall'activiy RUN
-		{
-			if (resultCode == Activity.RESULT_OK ) 
-			{
-				places = pData.getStringArrayListExtra("locations");
-				conta.setText(places.size() + "");
-				//TODO asynctask?
-				for (int i=0; i<places.size(); i++){	//ciclo che esegue e inserisce in databse
-					comando = places.get(i);
-					adapter.execute(comando);
-				}
-
-			}
-			
-		}
-	}
+//	protected void onActivityResult(
+//			int requestCode, 
+//			int resultCode,
+//			Intent pData) {
+//		if ( requestCode == RUN_CODE ) //se rientriamo dall'activiy RUN
+//		{
+//			if (resultCode == Activity.RESULT_OK ) 
+//			{
+//				String sql = getIntent().getStringExtra("createRun");
+//				adapter.execute(sql);
+//			}
+//			
+//		}
+//	}
 
 	private void createListDialog(String [] items, String title ) {
 		final String[] MenuItems = items;

@@ -52,6 +52,7 @@ public class RunActivity extends Activity implements OnClickListener {
 	private Float totalTime;
 	private String comment;
 	private String calendar;
+	
 	private DBAdapter adapter;
 
 	protected void onCreate(Bundle savedInstanceState) {
@@ -131,9 +132,10 @@ public class RunActivity extends Activity implements OnClickListener {
 	private void onStopOrBack() {
 		locationManager.removeUpdates(myLocationListener);
 		//se non è stato raccolto alcun dato
-		if(places.isEmpty()){
-			Intent iData = new Intent();
-			setResult( android.app.Activity.RESULT_CANCELED, iData );
+		if(counter==0){
+//			Intent iData = new Intent();
+//			setResult( android.app.Activity.RESULT_CANCELED, iData );
+			finish();
 		}
 		//se è stato raccolto almeno un dato
 		else{
@@ -153,12 +155,13 @@ public class RunActivity extends Activity implements OnClickListener {
 	//metodo che raccoglie le operazioni da compiere quando ho finito una corsa con dati raccolti
 	private void onFinishedRun() {
 		String sql = createLastSql();
-		places.add(sql);
+		//places.add(sql);
+		adapter.execute(sql);
 		Toast toast2 = Toast.makeText(getApplicationContext(), "Well done", Toast.LENGTH_SHORT);
 		toast2.show();
-		Intent iData = new Intent();
-		iData.putStringArrayListExtra("locations", places);
-		setResult( android.app.Activity.RESULT_OK, iData );
+//		Intent iData = new Intent();
+//		iData.putExtra("createRun", sql);
+//		setResult( android.app.Activity.RESULT_OK, iData );
 		finish();
 
 	}
@@ -173,7 +176,8 @@ public class RunActivity extends Activity implements OnClickListener {
 		if (counter==1){
 			sql = createSqlFirst(location);
 			locNow=location;
-			places.add(sql);
+			//places.add(sql);
+			adapter.execute(sql);
 		}
 
 		else{
@@ -185,7 +189,8 @@ public class RunActivity extends Activity implements OnClickListener {
 			time = time/1000;
 			totalTime  = totalTime + time;
 			sql = createSql(locNow, locPre, counter);
-			places.add(sql);
+			//places.add(sql);
+			adapter.execute(sql);
 		}
 
 		dist.setText("Distance m : " + totDistance);
