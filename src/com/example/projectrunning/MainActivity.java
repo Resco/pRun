@@ -22,10 +22,8 @@ public class MainActivity extends Activity implements OnClickListener {
 	private Button oldrun;
 	private Button rerun;
 	private TextView conta, conta2;
-	private int RUN_CODE = 1;
 	public ArrayList<String> places = new ArrayList<String>();
 	private DBAdapter adapter;
-	private String comando;
 	private Cursor cursor;
 	private Context contesto;
 
@@ -92,7 +90,6 @@ public class MainActivity extends Activity implements OnClickListener {
 			
 		//bottone SEE OLD RUN
 		case R.id.button4:
-			//TODO asynctask?
 			Cursor cursor = adapter.getAllRunsName();
 			String[] nameRun = new String [cursor.getCount()];
 			int i=0;
@@ -107,21 +104,6 @@ public class MainActivity extends Activity implements OnClickListener {
 			break;
 		}
 	}
-
-//	protected void onActivityResult(
-//			int requestCode, 
-//			int resultCode,
-//			Intent pData) {
-//		if ( requestCode == RUN_CODE ) //se rientriamo dall'activiy RUN
-//		{
-//			if (resultCode == Activity.RESULT_OK ) 
-//			{
-//				String sql = getIntent().getStringExtra("createRun");
-//				adapter.execute(sql);
-//			}
-//			
-//		}
-//	}
 
 	private void createListDialog(String [] items, String title ) {
 		final String[] MenuItems = items;

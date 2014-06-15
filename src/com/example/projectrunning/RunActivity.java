@@ -1,16 +1,18 @@
 package com.example.projectrunning;
 
-
+//TODO
 //controlla che non ci siano corse a zero punti
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -33,6 +35,8 @@ public class RunActivity extends Activity implements OnClickListener {
 
 	private Button start;
 	private Button stop;
+	private Button rerun;
+	private TextView rerunName;
 	private TextView time;
 	private TextView dist;
 	private int counter=0;
@@ -52,7 +56,7 @@ public class RunActivity extends Activity implements OnClickListener {
 	private Float totalTime;
 	private String comment;
 	private String calendar;
-	
+
 	private DBAdapter adapter;
 
 	protected void onCreate(Bundle savedInstanceState) {
@@ -62,7 +66,9 @@ public class RunActivity extends Activity implements OnClickListener {
 		//setta elementi grafici
 		start = (Button) findViewById(R.id.button1);
 		stop = (Button) findViewById(R.id.button2);
+		rerun = (Button) findViewById(R.id.button3);
 		time = (TextView) findViewById(R.id.textView1);
+		rerunName = (TextView) findViewById(R.id.textView3);
 		dist = (TextView) findViewById(R.id.textView2);
 		nameField = (EditText) findViewById(R.id.editText1);
 
@@ -73,6 +79,7 @@ public class RunActivity extends Activity implements OnClickListener {
 		//setta onclicklistener
 		start.setOnClickListener(this);
 		stop.setOnClickListener(this);
+		rerun.setOnClickListener(this);
 
 		//adapter
 		adapter = new DBAdapter(this);
@@ -125,7 +132,25 @@ public class RunActivity extends Activity implements OnClickListener {
 			break;
 		case R.id.button2:	//STOP
 			onStopOrBack();
+			break;
+		case R.id.button3:
+			Cursor cursor = adapter.getAllRunsName();
+			String[] nameRun = new String [cursor.getCount()];
+			int i=0;
+			if (cursor.moveToFirst()){
+				do{
+					nameRun [i] = cursor.getString(0);
+					i++;
+				}while(cursor.moveToNext());
+			}
+			cursor.close();
+			createListDialog(nameRun, "BelTitolo");
+			break;
 		}
+	}
+
+	public void onBackPressed() {
+		onStopOrBack();
 	}
 
 	//esegue le operazioni che devono avvenire dopo uno STOP o una pressione del tasto BACK
@@ -133,122 +158,12 @@ public class RunActivity extends Activity implements OnClickListener {
 		locationManager.removeUpdates(myLocationListener);
 		//se non è stato raccolto alcun dato
 		if(counter==0){
-//			Intent iData = new Intent();
-//			setResult( android.app.Activity.RESULT_CANCELED, iData );
 			finish();
 		}
 		//se è stato raccolto almeno un dato
 		else{
 			setDialogComment();
 		}
-	}
-
-	//metodo che crea il nome della corsa, appendendo al nome scelto la data
-	private void createName() {
-		runName = nameField.getText().toString() ;
-		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-		Date date = new Date();
-		calendar = dateFormat.format(date);
-		runName = "'" + runName + "_" + calendar + "'";
-	}
-
-	//metodo che raccoglie le operazioni da compiere quando ho finito una corsa con dati raccolti
-	private void onFinishedRun() {
-		String sql = createLastSql();
-		//places.add(sql);
-		adapter.execute(sql);
-		Toast toast2 = Toast.makeText(getApplicationContext(), "Well done", Toast.LENGTH_SHORT);
-		toast2.show();
-//		Intent iData = new Intent();
-//		iData.putExtra("createRun", sql);
-//		setResult( android.app.Activity.RESULT_OK, iData );
-		finish();
-
-	}
-
-
-	private void updateLocation(Location location){
-		if (location == null)
-			return;
-		counter++;
-
-		//se è il primo punto, creo l'sql e salvo la location in locNow
-		if (counter==1){
-			sql = createSqlFirst(location);
-			locNow=location;
-			//places.add(sql);
-			adapter.execute(sql);
-		}
-
-		else{
-			locPre = locNow;
-			locNow = location;
-			float distance = locNow.distanceTo(locPre);
-			totDistance  = totDistance + distance;
-			float time = locNow.getTime() - locPre.getTime();
-			time = time/1000;
-			totalTime  = totalTime + time;
-			sql = createSql(locNow, locPre, counter);
-			//places.add(sql);
-			adapter.execute(sql);
-		}
-
-		dist.setText("Distance m : " + totDistance);
-		time.setText("Time s : " + totalTime);
-	}
-
-	@Override
-	public void onBackPressed() {
-		onStopOrBack();
-	}
-
-	//crea la prima istruzione sql per la creazione del primo punto
-	private String createSqlFirst(Location location){
-		float number = 0;
-		float distance = 0;
-		float time = 0;
-		float speed = 0;
-		float lat = (float) location.getLatitude();
-		float lon = (float) location.getLongitude();
-
-		String sql = String.format
-				("insert into punti (npunto,distance,time,speed,lat,lon,names) VALUES (%s , %s , %s , %s , %s , %s , %s );",
-						number, distance, time,speed, lat, lon, runName);
-
-		Toast toast = Toast.makeText(getApplicationContext(), sql, Toast.LENGTH_SHORT);
-		toast.show();
-
-		return sql;
-	}
-
-	//crea l'istruzione sql per la creazione dei punti che non sono il primo
-	private String createSql(Location locationNow, Location locationPre, int num){
-		//devo calcolare speed
-		float number = num;
-		float distance = locationNow.distanceTo(locationPre);
-		float time = locationNow.getTime() - locationPre.getTime();
-		time = time/1000;
-		float speed = time/distance;
-		float lat = (float) locationNow.getLatitude();
-		float lon = (float) locationNow.getLongitude();
-
-		String sql = String.format
-				("insert into punti (npunto,distance,time,speed,lat,lon,names) VALUES (%s , %s , %s , %s , %s , %s , %s );",
-						number, distance, time,speed, lat, lon, runName);
-
-		Toast toast = Toast.makeText(getApplicationContext(), sql, Toast.LENGTH_SHORT);
-		toast.show();
-		return sql;
-	}
-
-	//crea l'ultima istruzione sql per la creazione della corsa nella tabella Corse
-	private String createLastSql (){
-		String calApici = "'" + calendar + "'";
-		String sql = String.format(
-				"insert into corse (names,comment,distance,time,calendar) VALUES (%s , %s , %s , %s , %s);",
-				runName, comment, totDistance, totalTime, calApici
-				);
-		return sql;
 	}
 
 	private void setDialogComment(){
@@ -269,7 +184,6 @@ public class RunActivity extends Activity implements OnClickListener {
 			}
 		});
 
-
 		new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int which) {
 				dialog.cancel();
@@ -278,6 +192,140 @@ public class RunActivity extends Activity implements OnClickListener {
 
 
 		alertDialog.show();
+	}
+
+	//metodo che raccoglie le operazioni da compiere quando ho finito una corsa con dati raccolti
+	private void onFinishedRun() {
+		String sql = createLastSql();
+		adapter.execute(sql);
+		Toast toast2 = Toast.makeText(getApplicationContext(), "Well done", Toast.LENGTH_SHORT);
+		toast2.show();
+		finish();
+
+	}
+
+	//metodo che crea il nome della corsa, appendendo al nome scelto la data
+	private void createName() {
+		runName = nameField.getText().toString() ;
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+		Date date = new Date();
+		calendar = dateFormat.format(date);
+		runName = "'" + runName + "_" + calendar + "'";
+	}
+	
+	private void createListDialog(String [] items, String title ) {
+		final String[] MenuItems = items;
+		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+		// set title
+		alertDialogBuilder.setTitle(title);
+		// set dialog message
+		alertDialogBuilder
+		.setCancelable(true)
+		.setSingleChoiceItems(MenuItems, 0, new DialogInterface.OnClickListener() {
+
+			@Override
+			public void onClick(DialogInterface dialog1, int pos) {
+
+				for (int i = 0; i<MenuItems.length; i++){
+					if (i==pos){
+						//ciò che voglio fare quando clicco un elemento
+						Toast toast = Toast.makeText(getApplicationContext(), MenuItems[i] + pos, Toast.LENGTH_SHORT);
+						toast.show();
+						String selected = "'" + MenuItems[i] +"'";
+						//TODO in asynctask
+						
+					}
+				}
+
+				//			        	
+				dialog1.cancel();
+			}
+		})
+		.setPositiveButton("Cancel",new DialogInterface.OnClickListener() {
+			@SuppressLint("NewApi")
+			public void onClick(DialogInterface dialog1,int id) {
+				dialog1.cancel();
+			}
+		});
+
+		// create alert dialog
+		AlertDialog alertDialog = alertDialogBuilder.create();
+		// show it
+		alertDialog.show();
+	}
+
+	private void updateLocation(Location location){
+		if (location == null)
+			return;
+		counter++;
+
+		//se è il primo punto, creo l'sql e salvo la location in locNow
+		if (counter==1){
+			sql = createSqlFirst(location);
+			locNow=location;
+			adapter.execute(sql);
+		}
+
+		else{
+			locPre = locNow;
+			locNow = location;
+			float distance = locNow.distanceTo(locPre);
+			totDistance  = totDistance + distance;
+			float time = locNow.getTime() - locPre.getTime();
+			time = time/1000;
+			totalTime  = totalTime + time;
+			sql = createSql(locNow, locPre, counter);
+			adapter.execute(sql);
+		}
+
+		dist.setText("Distance m : " + totDistance);
+		time.setText("Time s : " + totalTime);
+	}
+
+
+
+	//crea la prima istruzione sql per la creazione del primo punto
+	private String createSqlFirst(Location location){
+		float number = 0;
+		float distance = 0;
+		float time = 0;
+		float speed = 0;
+		float lat = (float) location.getLatitude();
+		float lon = (float) location.getLongitude();
+
+		String sql = String.format
+				("insert into punti (npunto,distance,time,speed,lat,lon,names) VALUES (%s , %s , %s , %s , %s , %s , %s );",
+						number, distance, time,speed, lat, lon, runName);
+
+		return sql;
+	}
+
+	//crea l'istruzione sql per la creazione dei punti che non sono il primo
+	private String createSql(Location locationNow, Location locationPre, int num){
+		//devo calcolare speed
+		float number = num;
+		float distance = locationNow.distanceTo(locationPre);
+		float time = locationNow.getTime() - locationPre.getTime();
+		time = time/1000;
+		float speed = time/distance;
+		float lat = (float) locationNow.getLatitude();
+		float lon = (float) locationNow.getLongitude();
+
+		String sql = String.format
+				("insert into punti (npunto,distance,time,speed,lat,lon,names) VALUES (%s , %s , %s , %s , %s , %s , %s );",
+						number, distance, time,speed, lat, lon, runName);
+
+		return sql;
+	}
+
+	//crea l'ultima istruzione sql per la creazione della corsa nella tabella Corse
+	private String createLastSql (){
+		String calApici = "'" + calendar + "'";
+		String sql = String.format(
+				"insert into corse (names,comment,distance,time,calendar) VALUES (%s , %s , %s , %s , %s);",
+				runName, comment, totDistance, totalTime, calApici
+				);
+		return sql;
 	}
 
 }

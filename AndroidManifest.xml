@@ -51,12 +51,14 @@
             android:name="com.example.projectrunning.RunActivity"
             android:label="@string/title_activity_run" >
         </activity>
-        
         <activity
             android:name="com.example.projectrunning.RunInfoActivity"
             android:label="@string/title_activity_run_info" >
         </activity>
-        
+        <activity
+            android:name="com.example.projectrunning.ReRunActivity"
+            android:label="@string/title_activity_re_run" >
+        </activity>
     </application>
 
 </manifest>

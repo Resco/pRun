@@ -166,6 +166,7 @@ int string common_signin_button_text 0x7f04001d
 int string common_signin_button_text_long 0x7f04001e
 int string hello_world 0x7f040021
 int string title_activity_map 0x7f040022
+int string title_activity_re_run 0x7f040026
 int string title_activity_run 0x7f040024
 int string title_activity_run_info 0x7f040025
 int string wallet_buy_button_place_holder 0x7f04001f

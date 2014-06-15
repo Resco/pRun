@@ -8,14 +8,10 @@ import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.Adapter;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 public class RunInfoActivity extends Activity implements OnClickListener {
 
@@ -27,50 +23,57 @@ public class RunInfoActivity extends Activity implements OnClickListener {
 	private TextView comment;
 	private ArrayList<LatLng> coords = new ArrayList<LatLng>();
 	private Button mapButton;
+	private Button delButton;
 	private int MAP_CODE = 1;
+	private String id;
 
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_run_info);
-		String id = getIntent().getStringExtra("id");
+
+		//prende l'id e lo mette in versione con apici
+		id = getIntent().getStringExtra("id");
 		id = "'" + id + "'";
-		
+
+		//setto le varie view e button
 		title = (TextView) findViewById(R.id.textView1);
 		distance = (TextView) findViewById(R.id.textView3);
 		time = (TextView) findViewById(R.id.textView5);
 		calendar = (TextView) findViewById(R.id.textView6);
 		comment = (TextView) findViewById(R.id.textView8);
 		mapButton = (Button) findViewById(R.id.button1);
+		delButton = (Button) findViewById(R.id.button2);
 
+		//setto gli onClickListener
 		mapButton.setOnClickListener(this);
-		
+		delButton.setOnClickListener(this);
+
+		//creo e apro l'adapter
 		adapter = new DBAdapter(this);
 		adapter.open();
-		
+
+		//cursore con la riga relativa al percorso scelto
 		Cursor cursor = adapter.getIdRowFromCorse(id);
-		
-		
-		Toast toast = Toast.makeText(getApplicationContext(), cursor.getColumnCount() +"", Toast.LENGTH_SHORT);
-		toast.show();
-		
+
+		//visualizzo le varie informazioni
 		title.setText(id);
 		cursor.moveToFirst();
-		
+
 		String comm = cursor.getString(cursor.getColumnIndex(DBContract.Corse.COLUMN_NAME_COMMENT));
 		comment.setText(comm);	
-		
+
 		Float dist = cursor.getFloat(cursor.getColumnIndex(DBContract.Corse.COLUMN_NAME_DISTANCE));
 		distance.setText(dist + "");
-		
+
 		Float tim = cursor.getFloat(cursor.getColumnIndex(DBContract.Corse.COLUMN_NAME_TIME));
 		time.setText(tim + "");
-		
+
 		String cal = cursor.getString(cursor.getColumnIndex(DBContract.Corse.COLUMN_NAME_DATA));
 		calendar.setText(cal);
-		
-		
+
+		//popolo l'arraylist che passerò alla activity della mappa
 		cursor = adapter.getIdRowFromPunti(id);
 		if (cursor.moveToFirst()){
 			do{
@@ -80,8 +83,8 @@ public class RunInfoActivity extends Activity implements OnClickListener {
 				coords.add(mark);
 			}while(cursor.moveToNext());
 		}
-		
-		
+
+
 
 
 	}
@@ -89,8 +92,20 @@ public class RunInfoActivity extends Activity implements OnClickListener {
 
 	@Override
 	public void onClick(View v) {
-		Intent intent = new Intent(this, MapActivity.class); // Explicit intent creation
-		intent.putParcelableArrayListExtra("latlngs", coords);
-		startActivityForResult(intent, MAP_CODE); // Start as sub-activity for result	
+		switch (v.getId()){
+		//bottone MAP
+		case R.id.button1:
+			Intent intent = new Intent(this, MapActivity.class); // Explicit intent creation
+			intent.putParcelableArrayListExtra("latlngs", coords);
+			startActivityForResult(intent, MAP_CODE); // Start as sub-activity for result
+			break;
+			//bottone DELETE
+		case R.id.button2:
+			String sql = "DELETE FROM Corse WHERE names=" + id + ";";
+			adapter.execute(sql);
+			sql = "DELETE FROM Punti WHERE names=" + id + ";";
+			adapter.execute(sql);
+			finish();
+		}
 	}
 }

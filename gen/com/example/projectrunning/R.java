@@ -555,6 +555,7 @@ containing a value of this type.
         public static final int common_signin_button_text_long=0x7f04001e;
         public static final int hello_world=0x7f040021;
         public static final int title_activity_map=0x7f040022;
+        public static final int title_activity_re_run=0x7f040026;
         public static final int title_activity_run=0x7f040024;
         public static final int title_activity_run_info=0x7f040025;
         /**  Text on a placeholder buy button when Google Play services is not

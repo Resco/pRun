@@ -7,5 +7,6 @@
     <string name="action_settings">Settings</string>
     <string name="title_activity_run">RunActivity</string>
     <string name="title_activity_run_info">RunInfoActivity</string>
+    <string name="title_activity_re_run">ReRunActivity</string>
 
 </resources>

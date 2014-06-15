@@ -95,6 +95,8 @@ class DBAdapter {
 	public void deleteAllRows(){
 		db.execSQL("DELETE FROM " +DBContract.Punti.TABLE_NAME +" WHERE " + DBContract.Punti.COLUMN_NAME_NUMPUNTO + " >=0");
 	}
+	
+
 //
 //	/**
 //   * Return a Cursor over the list of all items in the database
