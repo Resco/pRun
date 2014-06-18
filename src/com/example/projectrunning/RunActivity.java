@@ -11,7 +11,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.database.Cursor;
 import android.location.Location;
 import android.location.LocationListener;
@@ -39,7 +38,6 @@ public class RunActivity extends Activity implements OnClickListener {
 	private TextView rerunName;
 	private TextView time;
 	private TextView dist;
-	private int counter=0;
 
 	public ArrayList<String> places = new ArrayList<String>();
 
@@ -56,8 +54,16 @@ public class RunActivity extends Activity implements OnClickListener {
 	private Float totalTime;
 	private String comment;
 	private String calendar;
+	private int counter=0;
+	private boolean rerunBool = false;
+	private float [] checkPoints = new float[4];
+	private float [] checkTimes = new float [4];
+
 
 	private DBAdapter adapter;
+	private float speed;
+	private int checkdone = 0;
+	private TextView delay;
 
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -69,12 +75,14 @@ public class RunActivity extends Activity implements OnClickListener {
 		rerun = (Button) findViewById(R.id.button3);
 		time = (TextView) findViewById(R.id.textView1);
 		rerunName = (TextView) findViewById(R.id.textView3);
+		delay = (TextView) findViewById(R.id.textView4);
 		dist = (TextView) findViewById(R.id.textView2);
 		nameField = (EditText) findViewById(R.id.editText1);
 
 		//setta a zero i contatori
 		totDistance = (float) 0;
 		totalTime = (float) 0;
+		checkdone = 0;
 
 		//setta onclicklistener
 		start.setOnClickListener(this);
@@ -205,6 +213,7 @@ public class RunActivity extends Activity implements OnClickListener {
 	}
 
 	//metodo che crea il nome della corsa, appendendo al nome scelto la data
+	@SuppressLint("SimpleDateFormat")
 	private void createName() {
 		runName = nameField.getText().toString() ;
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
@@ -212,7 +221,7 @@ public class RunActivity extends Activity implements OnClickListener {
 		calendar = dateFormat.format(date);
 		runName = "'" + runName + "_" + calendar + "'";
 	}
-	
+
 	private void createListDialog(String [] items, String title ) {
 		final String[] MenuItems = items;
 		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
@@ -232,13 +241,73 @@ public class RunActivity extends Activity implements OnClickListener {
 						Toast toast = Toast.makeText(getApplicationContext(), MenuItems[i] + pos, Toast.LENGTH_SHORT);
 						toast.show();
 						String selected = "'" + MenuItems[i] +"'";
+						rerunName.setText(selected);
 						//TODO in asynctask
-						
+						//segnalo che sono in rerun
+						rerunBool  = true;
+
+						//gli array dove salvo i check (Time e distance)
+
+
+						Cursor cursor = adapter.getIdRowFromPunti(selected);
+						cursor.moveToFirst();
+
+						//approssimazione per difetto al naturale più vicino ad 1/4 del numero dei punti del percorso
+						int numbRows = cursor.getCount();
+						int x = numbRows/4;
+						int xRounded = 0;
+						for (int j = 0; j< numbRows; j++){
+							if (j>x){
+								xRounded=j-1;
+								break;}
+						}
+
+						createCheckpoints(cursor, numbRows, xRounded);
+
 					}
 				}
 
 				//			        	
 				dialog1.cancel();
+			}
+
+			private void createCheckpoints(Cursor cursor, int numbRows,
+					int xRounded) {
+				float distCounter;
+				float lastDist;
+				float timeCounter;
+				float lastTime;
+				//salva i 4 check con tempo e distanza di ognuno
+				for (int y = 1; y<=3; y++){
+					distCounter=0;
+					timeCounter=0;
+					for (int z = 0; z<=(xRounded*y)-1; z++){
+						cursor.moveToPosition(z);
+						lastDist = cursor.getFloat(cursor.getColumnIndex(DBContract.Punti.COLUMN_NAME_DISTANCE));
+						distCounter = distCounter + lastDist;
+						lastTime = cursor.getFloat(cursor.getColumnIndex(DBContract.Punti.COLUMN_NAME_TIME));
+						timeCounter = timeCounter + lastTime;
+
+					}
+					checkPoints[y-1]=distCounter;
+					checkTimes[y-1]=timeCounter;
+					Toast.makeText(getApplicationContext(), "" + distCounter + " " + timeCounter,
+							Toast.LENGTH_SHORT).show();
+				}
+				distCounter=0;
+				timeCounter=0;
+				for (int z = 0; z<=(numbRows -1); z++){
+					cursor.moveToPosition(z);
+					lastDist = cursor.getFloat(cursor.getColumnIndex(DBContract.Punti.COLUMN_NAME_DISTANCE));
+					distCounter = distCounter + lastDist;
+					lastTime = cursor.getFloat(cursor.getColumnIndex(DBContract.Punti.COLUMN_NAME_TIME));
+					timeCounter = timeCounter + lastTime;
+
+				}
+				checkPoints[3]=distCounter;
+				checkTimes[3]=timeCounter;
+				Toast.makeText(getApplicationContext(), "" + distCounter + " " + timeCounter,
+						Toast.LENGTH_SHORT).show();
 			}
 		})
 		.setPositiveButton("Cancel",new DialogInterface.OnClickListener() {
@@ -276,10 +345,61 @@ public class RunActivity extends Activity implements OnClickListener {
 			totalTime  = totalTime + time;
 			sql = createSql(locNow, locPre, counter);
 			adapter.execute(sql);
+			if (rerunBool){
+
+
+				switch (checkdone){
+				case 0:
+					compareTime(checkdone);
+					Toast.makeText(getApplicationContext(), "enter in case " + checkdone,
+							Toast.LENGTH_SHORT).show();
+					break;
+				case 1:
+					compareTime(checkdone);
+					Toast.makeText(getApplicationContext(), "enter in case " + checkdone,
+							Toast.LENGTH_SHORT).show();
+					break;
+				case 2:
+					compareTime(checkdone);
+					Toast.makeText(getApplicationContext(), "enter in case " + checkdone,
+							Toast.LENGTH_SHORT).show();
+					break;
+				case 3:
+					compareTime(checkdone);
+					Toast.makeText(getApplicationContext(), "enter in case " + checkdone,
+							Toast.LENGTH_SHORT).show();
+					break;
+				}
+
+			}
 		}
 
 		dist.setText("Distance m : " + totDistance);
 		time.setText("Time s : " + totalTime);
+	}
+
+	private void compareTime(int checkdone) {
+		String delayString;
+		float difference = 0;
+
+		if(totDistance>checkPoints[checkdone]){
+			float diff = totDistance-checkPoints[checkdone];	//metri in più rispetto al check
+			float timeDiff = diff * speed;						//il tempo impiegato per fare i metri in più
+			float timeToCompare = totalTime - timeDiff;			//il tempo impiegato a fare gli stessi metri del check
+			if (timeToCompare>checkTimes[checkdone]){
+				//				Toast.makeText(getApplicationContext(), "Sei stato più lento",
+				//				Toast.LENGTH_SHORT).show();
+				difference = timeToCompare - checkTimes[checkdone];
+				delayString="Hai percorso " + checkPoints[checkdone] +" metri PIU' LENTAMENTE di " + difference + " secondi.";
+				delay.setText(delayString);}
+			if (timeToCompare<=checkTimes[checkdone]){
+				//				Toast.makeText(getApplicationContext(), "Sei stato più veloce",
+				//				Toast.LENGTH_SHORT).show();		
+				difference = checkTimes[checkdone] - timeToCompare;
+				delayString="Hai percorso " + checkPoints[checkdone] +" metri PIU' VELOCEMENTE di " + difference + " secondi.";
+				delay.setText(delayString);}
+			this.checkdone++;
+		}
 	}
 
 
@@ -307,7 +427,7 @@ public class RunActivity extends Activity implements OnClickListener {
 		float distance = locationNow.distanceTo(locationPre);
 		float time = locationNow.getTime() - locationPre.getTime();
 		time = time/1000;
-		float speed = time/distance;
+		speed = time/distance;
 		float lat = (float) locationNow.getLatitude();
 		float lon = (float) locationNow.getLongitude();
 
