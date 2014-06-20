@@ -12,10 +12,12 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -26,6 +28,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class RunActivity extends Activity implements OnClickListener {
+
+	private int prova;
 
 	private String provider = LocationManager.GPS_PROVIDER;
 	private LocationManager locationManager;
@@ -54,16 +58,20 @@ public class RunActivity extends Activity implements OnClickListener {
 	private Float totalTime;
 	private String comment;
 	private String calendar;
+	private String selected;
 	private int counter=0;
 	private boolean rerunBool = false;
+	private boolean waiter;
 	private float [] checkPoints = new float[4];
 	private float [] checkTimes = new float [4];
 
 
+	private CheckpointBuilder builder;
 	private DBAdapter adapter;
 	private float speed;
 	private int checkdone = 0;
 	private TextView delay;
+	private CheckpointBuilder asyncBuilder;
 
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -78,6 +86,8 @@ public class RunActivity extends Activity implements OnClickListener {
 		delay = (TextView) findViewById(R.id.textView4);
 		dist = (TextView) findViewById(R.id.textView2);
 		nameField = (EditText) findViewById(R.id.editText1);
+		
+		stop.setEnabled(false);
 
 		//setta a zero i contatori
 		totDistance = (float) 0;
@@ -135,6 +145,8 @@ public class RunActivity extends Activity implements OnClickListener {
 			createName();
 			Toast toast1 = Toast.makeText(getApplicationContext(), "Start pushing " + runName, Toast.LENGTH_SHORT);
 			toast1.show();
+			start.setEnabled(false);
+			rerun.setEnabled(false);
 			//aggiornament ricevuti ogni 3 metri o 3 secondi
 			locationManager.requestLocationUpdates(provider, 3000, 3, myLocationListener);
 			break;
@@ -232,6 +244,9 @@ public class RunActivity extends Activity implements OnClickListener {
 		.setCancelable(true)
 		.setSingleChoiceItems(MenuItems, 0, new DialogInterface.OnClickListener() {
 
+
+			private Void params;
+
 			@Override
 			public void onClick(DialogInterface dialog1, int pos) {
 
@@ -240,75 +255,22 @@ public class RunActivity extends Activity implements OnClickListener {
 						//ciò che voglio fare quando clicco un elemento
 						Toast toast = Toast.makeText(getApplicationContext(), MenuItems[i] + pos, Toast.LENGTH_SHORT);
 						toast.show();
-						String selected = "'" + MenuItems[i] +"'";
+						selected = "'" + MenuItems[i] +"'";
 						rerunName.setText(selected);
-						//TODO in asynctask
-						//segnalo che sono in rerun
-						rerunBool  = true;
 
-						//gli array dove salvo i check (Time e distance)
-
-
-						Cursor cursor = adapter.getIdRowFromPunti(selected);
-						cursor.moveToFirst();
-
-						//approssimazione per difetto al naturale più vicino ad 1/4 del numero dei punti del percorso
-						int numbRows = cursor.getCount();
-						int x = numbRows/4;
-						int xRounded = 0;
-						for (int j = 0; j< numbRows; j++){
-							if (j>x){
-								xRounded=j-1;
-								break;}
-						}
-
-						createCheckpoints(cursor, numbRows, xRounded);
+						start.setEnabled(false);
+						stop.setEnabled(false);
+						asyncBuilder = new CheckpointBuilder();
+						asyncBuilder.execute(params);
 
 					}
 				}
 
-				//			        	
+
 				dialog1.cancel();
 			}
 
-			private void createCheckpoints(Cursor cursor, int numbRows,
-					int xRounded) {
-				float distCounter;
-				float lastDist;
-				float timeCounter;
-				float lastTime;
-				//salva i 4 check con tempo e distanza di ognuno
-				for (int y = 1; y<=3; y++){
-					distCounter=0;
-					timeCounter=0;
-					for (int z = 0; z<=(xRounded*y)-1; z++){
-						cursor.moveToPosition(z);
-						lastDist = cursor.getFloat(cursor.getColumnIndex(DBContract.Punti.COLUMN_NAME_DISTANCE));
-						distCounter = distCounter + lastDist;
-						lastTime = cursor.getFloat(cursor.getColumnIndex(DBContract.Punti.COLUMN_NAME_TIME));
-						timeCounter = timeCounter + lastTime;
 
-					}
-					checkPoints[y-1]=distCounter;
-					checkTimes[y-1]=timeCounter;
-					Toast.makeText(getApplicationContext(), "" + distCounter + " " + timeCounter,
-							Toast.LENGTH_SHORT).show();
-				}
-				distCounter=0;
-				timeCounter=0;
-				for (int z = 0; z<=(numbRows -1); z++){
-					cursor.moveToPosition(z);
-					lastDist = cursor.getFloat(cursor.getColumnIndex(DBContract.Punti.COLUMN_NAME_DISTANCE));
-					distCounter = distCounter + lastDist;
-					lastTime = cursor.getFloat(cursor.getColumnIndex(DBContract.Punti.COLUMN_NAME_TIME));
-					timeCounter = timeCounter + lastTime;
-
-				}
-				checkPoints[3]=distCounter;
-				checkTimes[3]=timeCounter;
-				Toast.makeText(getApplicationContext(), "" + distCounter + " " + timeCounter,
-						Toast.LENGTH_SHORT).show();
-			}
 		})
 		.setPositiveButton("Cancel",new DialogInterface.OnClickListener() {
 			@SuppressLint("NewApi")
@@ -446,6 +408,78 @@ public class RunActivity extends Activity implements OnClickListener {
 				runName, comment, totDistance, totalTime, calApici
 				);
 		return sql;
+	}
+
+	class CheckpointBuilder extends AsyncTask<Void, Void, Void>{
+
+
+		private void createCheckpoints(Cursor cursor, int numbRows,
+				int xRounded) {
+			float distCounter;
+			float lastDist;
+			float timeCounter;
+			float lastTime;
+			//salva i 4 check con tempo e distanza di ognuno
+			for (int y = 1; y<=3; y++){
+				distCounter=0;
+				timeCounter=0;
+				for (int z = 0; z<=(xRounded*y)-1; z++){
+					cursor.moveToPosition(z);
+					lastDist = cursor.getFloat(cursor.getColumnIndex(DBContract.Punti.COLUMN_NAME_DISTANCE));
+					distCounter = distCounter + lastDist;
+					lastTime = cursor.getFloat(cursor.getColumnIndex(DBContract.Punti.COLUMN_NAME_TIME));
+					timeCounter = timeCounter + lastTime;
+
+				}
+				checkPoints[y-1]=distCounter;
+				checkTimes[y-1]=timeCounter;
+
+			}
+			distCounter=0;
+			timeCounter=0;
+			for (int z = 0; z<=(numbRows -1); z++){
+				cursor.moveToPosition(z);
+				lastDist = cursor.getFloat(cursor.getColumnIndex(DBContract.Punti.COLUMN_NAME_DISTANCE));
+				distCounter = distCounter + lastDist;
+				lastTime = cursor.getFloat(cursor.getColumnIndex(DBContract.Punti.COLUMN_NAME_TIME));
+				timeCounter = timeCounter + lastTime;
+			}
+			checkPoints[3]=distCounter;
+			checkTimes[3]=timeCounter;
+
+		}
+
+		@Override
+		protected Void doInBackground(Void... params) {
+			//			//TODO in asynctask
+			//			//segnalo che sono in rerun
+			rerunBool  = true;
+			//
+			Cursor cursor = adapter.getIdRowFromPunti(selected);
+			cursor.moveToFirst();
+			//
+			//			//approssimazione per difetto al naturale più vicino ad 1/4 del numero dei punti del percorso
+			int numbRows = cursor.getCount();
+			int x = numbRows/4;
+			int xRounded = 0;
+			for (int j = 0; j< numbRows; j++){
+				if (j>x){
+					xRounded=j-1;
+					break;}
+			}
+
+			createCheckpoints(cursor, numbRows, xRounded);
+
+			return null;
+		}
+		
+		protected void onPostExecute(Void result){
+			start.setEnabled(true);
+			stop.setEnabled(true);
+			delay.setText("" + prova);
+			return;
+		}
+
 	}
 
 }

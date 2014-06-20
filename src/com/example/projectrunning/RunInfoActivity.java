@@ -2,11 +2,13 @@ package com.example.projectrunning;
 
 import java.util.ArrayList;
 
+import com.example.projectrunning.RunActivity.CheckpointBuilder;
 import com.google.android.gms.maps.model.LatLng;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -26,6 +28,9 @@ public class RunInfoActivity extends Activity implements OnClickListener {
 	private Button delButton;
 	private int MAP_CODE = 1;
 	private String id;
+	private Cursor cursor;
+	private Void params;
+	private listBuilder builder;
 
 
 	@Override
@@ -46,6 +51,9 @@ public class RunInfoActivity extends Activity implements OnClickListener {
 		mapButton = (Button) findViewById(R.id.button1);
 		delButton = (Button) findViewById(R.id.button2);
 
+		mapButton.setEnabled(false);
+		delButton.setEnabled(false);
+
 		//setto gli onClickListener
 		mapButton.setOnClickListener(this);
 		delButton.setOnClickListener(this);
@@ -55,7 +63,7 @@ public class RunInfoActivity extends Activity implements OnClickListener {
 		adapter.open();
 
 		//cursore con la riga relativa al percorso scelto
-		Cursor cursor = adapter.getIdRowFromCorse(id);
+		cursor = adapter.getIdRowFromCorse(id);
 
 		//visualizzo le varie informazioni
 		title.setText(id);
@@ -74,16 +82,9 @@ public class RunInfoActivity extends Activity implements OnClickListener {
 		calendar.setText(cal);
 
 		//popolo l'arraylist che passerò alla activity della mappa
-		cursor = adapter.getIdRowFromPunti(id);
-		if (cursor.moveToFirst()){
-			do{
-				float lat = cursor.getFloat(cursor.getColumnIndex(DBContract.Punti.COLUMN_NAME_LAT));
-				float lon = cursor.getFloat(cursor.getColumnIndex(DBContract.Punti.COLUMN_NAME_LON));
-				LatLng mark = new LatLng(lat, lon);
-				coords.add(mark);
-			}while(cursor.moveToNext());
-		}
 
+		builder = new listBuilder();
+		builder.execute(params);
 
 
 
@@ -107,5 +108,28 @@ public class RunInfoActivity extends Activity implements OnClickListener {
 			adapter.execute(sql);
 			finish();
 		}
+	}
+
+	class listBuilder extends AsyncTask<Void, Void, Void>{
+
+		@Override
+		protected Void doInBackground(Void... params) {
+			cursor = adapter.getIdRowFromPunti(id);
+			if (cursor.moveToFirst()){
+				do{
+					float lat = cursor.getFloat(cursor.getColumnIndex(DBContract.Punti.COLUMN_NAME_LAT));
+					float lon = cursor.getFloat(cursor.getColumnIndex(DBContract.Punti.COLUMN_NAME_LON));
+					LatLng mark = new LatLng(lat, lon);
+					coords.add(mark);
+				}while(cursor.moveToNext());
+			}
+			return null;
+		}
+
+		protected void onPostExecute(Void result){
+			mapButton.setEnabled(true);
+			delButton.setEnabled(true);
+		}
+
 	}
 }
